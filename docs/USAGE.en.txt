@@ -1,0 +1,356 @@
+SysMon One v7.1.1 — Usage Guide (English)
+================================================================================
+
+This document is for anyone opening SysMon One for the first time. It explains
+how to run it, what the numbers mean, and what the tool deliberately refuses to do.
+There is no marketing copy here and no comparison against other tools.
+
+
+1. What SysMon One is
+--------------------------------------------------------------------------------
+
+SysMon One is a single-file, local system monitor, diagnostic tool and
+conservative storage cleaner.
+
+  - Single file: on macOS it is one .command file (embedded Python 3); on
+    Windows it is one .cmd file (embedded built-in PowerShell).
+    Nothing to install: no pip, no npm, no package manager.
+  - No sudo: standard operation runs entirely as a normal user.
+  - Local only: no network access, no telemetry, no account, no background
+    service, no auto-updater.
+  - Honest by design: a sensor that cannot be read shows N/A. It never
+    invents a plausible-looking number.
+  - Conservative cleanup: only rebuildable caches and diagnostic files are
+    ever cleaned. Personal files never enter an automatic deletion path.
+
+Current version: v7.1.1. The macOS mainline has been verified to start normally
+on real hardware (Mac16,11 / Apple M4 Pro / 24 GB / macOS 27.0 build 26A5425a).
+The Windows build is Beta and is still waiting for more real-machine feedback.
+
+
+2. Running it on macOS
+--------------------------------------------------------------------------------
+
+  1) Download SysMon-One-v7.1.1-macOS.zip from the Releases page.
+  2) Extract it (do not re-save the .command file on its own from a chat
+     window, that loses the executable permission).
+  3) Double-click SysMon-One.command. A terminal window opens and the UI
+     refreshes in place.
+
+Keys:
+
+  C        Storage Doctor
+  P        Process Center
+  /        Process search
+  Q        Quit
+  Ctrl+C   Quit (works from any screen)
+
+Optional command line arguments:
+
+  --lang zh|en     force the language
+  --compact        compact layout
+  --expert         show more detail
+  --doctor         go straight to Storage Doctor
+  --clean          run the green safe-item cleanup flow
+  --scan           run a storage scan and print the result
+  --interval 2     refresh interval in seconds
+
+The layout adapts to the terminal width; a wider window fits more cores per row.
+
+
+3. Running it on Windows
+--------------------------------------------------------------------------------
+
+  1) Download SysMon-One-v7.1.1-Windows.zip from the Releases page.
+  2) Extract it.
+  3) Double-click SysMon-One-Windows.cmd. It runs through the built-in
+     PowerShell; Python is not required.
+
+Notes:
+
+  - Requires the system PowerShell (present by default on Windows 10/11).
+  - Current status is Beta: real-machine validation is still in progress.
+    Please report anything odd (see section 18).
+  - Fan data appears only when Windows / the OEM or a supported sensor
+    provider exposes it. Otherwise it is N/A.
+
+
+4. What the main screen shows
+--------------------------------------------------------------------------------
+
+From top to bottom the main screen roughly contains:
+
+  Model / chip / build   hardware model, SoC, OS build
+  Load                   system load average (1 / 5 / 15 minutes)
+  CPU                    total usage, per-core or per-cluster frequency and
+                         usage, effective frequency
+  GPU                    GPU cores, frequency, GPU Active
+  Memory                 used / available / compressed
+  Swap                   used / total, swap-in and swap-out rates
+  Memory Pressure        live memory pressure: NORMAL / WARN / CRITICAL
+  Disk                   capacity, read and write rates
+  Network                upload / download rates
+  Temperature / Fan      temperature sensors and fan speed (N/A when unsupported)
+  Battery                charging / discharging state, wattage, level trend
+  Trend                  roughly the last 60 seconds of change
+  Processes              process count and the heaviest processes
+
+The values come from system counters that are publicly or semi-publicly
+available. If one cannot be read, you see N/A rather than a guess.
+
+
+5. CPU / GPU / RAM / Swap
+--------------------------------------------------------------------------------
+
+CPU
+  Total usage is the weighted result of all cores. The per-core view groups
+  cores by cluster (on Apple Silicon that usually means efficiency cores and
+  performance cores). Effective frequency is what the cores are actually
+  running at right now, not their maximum rating.
+
+GPU
+  Shows GPU frequency and GPU Active. Note: GPU Active is the share of time
+  spent outside the OFF residency state. It is an observable fact, and it is
+  not the same thing as a driver-level utilization counter; we do not present
+  one as the other.
+
+RAM
+  The memory block shows used, available and compressed memory. macOS compresses
+  inactive memory, so "used" can legitimately include a large compressed portion.
+  That is normal behaviour, not a leak.
+
+Swap
+  Shows swap used / total plus the live swap-in and swap-out rates. The rates
+  matter more than the absolute number: a stable, high usage with no swap
+  traffic is usually better than a low usage with constant thrashing.
+
+
+6. Why a large swap does not automatically need cleaning
+--------------------------------------------------------------------------------
+
+This is the most commonly misread item. A large swap footprint is not a fault:
+
+  - The system swaps out pages that have not been used for a while. That is
+    normal scheduling.
+  - Many processes swap out a large block once and never touch it again;
+    holding swap space does not by itself cost performance.
+  - What actually affects responsiveness is whether swap-in / swap-out is
+    continuously happening, and whether memory pressure is rising.
+
+So use these criteria instead:
+
+  - Memory Pressure = NORMAL and swap traffic near zero
+      -> leave it alone, no matter how large the swap number looks.
+  - Memory Pressure = WARN / CRITICAL, or sustained swap traffic
+      -> now it is worth looking at the memory top processes. Do not kill
+         processes just to force the number back to zero.
+
+Also note that the per-process "Swapped" figure in the process list (compressed /
+swapped process memory) is not the same measurement as the on-disk swap totals.
+They use different accounting; do not mix them.
+
+In short: do not optimize a healthy system into an incident just to get a few
+prettier zeros.
+
+
+7. What Memory Pressure is
+--------------------------------------------------------------------------------
+
+Memory Pressure is the system-level indicator of how hard memory allocation is:
+
+  NORMAL    normal
+  WARN      under pressure
+  CRITICAL  severe
+
+It reflects whether the system is struggling to satisfy allocations. The UI also
+shows a live pressure index, which is a heuristic derived from the current state.
+Use it to watch trends. It is not a performance score and it is not meaningful as a
+cross-machine comparison.
+
+
+8. C: Storage Doctor
+--------------------------------------------------------------------------------
+
+Press C. It scans the common sources of disk usage and classifies them, for
+example:
+
+  - application caches (30 days and older)
+  - crash reports (14 days and older)
+  - installers and archives
+  - large files
+  - Trash
+  - a home-directory map (HOME MAP)
+
+The three tiers are explained in section 14. Cleaning actions only ever touch
+the "green safe" items, and you must confirm (type y) before anything is removed.
+
+
+9. P: Process Center
+--------------------------------------------------------------------------------
+
+Press P. Submenu:
+
+  [1] current user process tree    process relationships for the current user
+  [2] CPU/RAM Top20                processes ranked by CPU and by memory
+  [3] search processes             search by name / command line
+  [4] terminate a PID              see section 11 for the signal policy
+  [0] back to the monitor
+
+
+10. /: Search
+--------------------------------------------------------------------------------
+
+Press / to search processes directly (same as [3] in the Process Center). Type any
+fragment of the name or command line; matching is a case-insensitive substring
+search. From there you can return to the Process Center and use [4] to act on it.
+
+
+11. TERM vs KILL
+--------------------------------------------------------------------------------
+
+Terminating a process is a two-step sequence:
+
+  Step 1  TERM (graceful request)
+          Asks the process to shut down on its own terms, so it can save files,
+          close connections and release resources. Most processes stop here.
+
+  Step 2  KILL (forced)
+          Only used if step 1 did not work, and it needs a second explicit y
+          confirmation from you. A forced kill gives the process no chance to
+          clean up; unsaved data can be lost.
+
+The prompts are not decoration: while the process is still alive the UI states
+plainly that force-killing may cause unsaved data loss.
+
+
+12. Why some processes cannot be terminated
+--------------------------------------------------------------------------------
+
+Certain processes are explicitly protected and will refuse a termination request:
+
+  - Critical system processes: stopping them can make the system unstable or the
+    UI unresponsive, possibly requiring a reboot.
+  - The tool's own process: so the UI cannot kill itself out from under you.
+  - Processes owned by other users: not handled in no-sudo mode (that is one of
+    the costs of never asking for sudo).
+
+This is a design boundary, not a missing feature: a monitoring tool should not
+be capable of trivially damaging the system it is reporting on.
+
+
+13. What a fan value of N/A means
+--------------------------------------------------------------------------------
+
+The fan row can show N/A, which means "this machine does not provide that reading
+here". Common reasons:
+
+  - The model has no fan (for example some MacBook Air models).
+  - The sensor is not exposed through the interfaces available to a normal user.
+  - The read was refused or timed out.
+
+N/A means N/A; no estimate is substituted. The rest of the monitor keeps working.
+
+v7.1.1 fix note: in v7.1.0, on some Apple Silicon systems with the system Python
+3.9, initialising the fan sensor treated Darwin's mach_task_self_ data symbol as
+if it were a function and called it, which crashed the process. v7.1.1 reads that
+Mach port as a data symbol and validates the AppleSMC ABI size; if the read fails
+the reading degrades to N/A and the main monitor stays usable.
+
+
+14. The three Storage Doctor tiers
+--------------------------------------------------------------------------------
+
+  Green safe      Rebuildable caches and diagnostic files. Removing them at worst
+                  makes the system or an application regenerate them. You can
+                  clean all green items in one action (confirm with y).
+
+  Yellow review   Can be large, but the decision is yours (for example large
+                  downloads or old installers). Displayed only, never auto-deleted.
+
+  Red protected   Protected content that is never auto-deleted.
+
+The UI states it directly: green means rebuildable cache / diagnostic files;
+yellow means possibly large, judged by you. We do not manufacture impressive
+numbers by calling personal files "junk".
+
+
+15. Directories that are never auto-deleted
+--------------------------------------------------------------------------------
+
+The following never enter an automatic deletion path; they are only displayed or
+pointed out:
+
+  Desktop / Documents / Photos Library / iCloud Drive / Mail / Messages / project files
+  (personal content inside Desktop and Downloads is likewise displayed only)
+
+If you want to free space there, review the files yourself and handle them manually.
+
+
+16. macOS permissions / Gatekeeper
+--------------------------------------------------------------------------------
+
+Case 1: "no execute permission" or the file will not open
+  -> Extract the ZIP from Releases and run from there. Do not re-save the
+     .command file on its own from a chat window; that drops the execute bit.
+
+Case 2: Gatekeeper says the developer cannot be verified / is unidentified
+  -> Open System Settings -> Privacy & Security and choose "Open Anyway" at the
+     security prompt. Double-clicking works normally afterwards.
+
+Case 3: restoring the execute bit manually (one terminal command)
+  -> chmod 755 SysMon-One.command
+
+All of this concerns local file permissions only. No account and no network
+authorisation is involved.
+
+
+17. Windows PowerShell prompts
+--------------------------------------------------------------------------------
+
+  - Just double-click SysMon-One-Windows.cmd. The script invokes the system
+    PowerShell with -NoProfile -ExecutionPolicy Bypass, so an execution policy
+    prompt normally does not appear.
+  - If SmartScreen shows "Windows protected your PC", choose "More info" ->
+    "Run anyway". This is the standard prompt for unsigned scripts.
+  - If PowerShell is reported missing, check that the Windows PowerShell
+    component has not been removed from Windows 10/11.
+  - Run it as a normal user; this tool does not need administrator rights.
+
+
+18. How to report a bug
+--------------------------------------------------------------------------------
+
+Please use the Bug Report template in GitHub Issues and include:
+
+  - SysMon One version (shown in the header, for example v7.1.1)
+  - OS and version
+  - hardware model
+  - CPU / SoC
+  - RAM
+  - what happened
+  - expected result
+  - steps to reproduce
+  - screenshot or terminal output
+  - whether it reproduces every time
+
+Before submitting, remove: usernames, private paths, IP addresses, tokens or API
+keys, email addresses, system passwords, and the contents of private files. The
+template contains a confirmation checkbox for this.
+
+About sensors: different vendors and different SoCs simply expose different data.
+A missing sensor reading is usually not a bug, it means the hardware or the OS did
+not expose it. We will label it N/A honestly.
+
+For security issues, do not open a public issue. Use the repository's private
+vulnerability reporting on the Security tab. See SECURITY.md.
+
+
+Appendix: safety boundaries (full list)
+--------------------------------------------------------------------------------
+
+  - No sudo
+  - No network access, no telemetry, no account
+  - No background service, no auto-updater
+  - No automatic deletion of personal files
+  - Critical system processes are protected from direct termination
+  - Unsupported sensor values show N/A instead of fabricated values

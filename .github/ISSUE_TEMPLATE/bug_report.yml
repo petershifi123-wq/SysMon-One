@@ -1,0 +1,91 @@
+name: Bug report
+description: Report a problem with SysMon One
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please do not include passwords, tokens, private
+        paths or private file contents.
+  - type: input
+    id: version
+    attributes:
+      label: SysMon One version
+      placeholder: v7.1.1
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - macOS
+        - Windows
+    validations:
+      required: true
+  - type: input
+    id: os_version
+    attributes:
+      label: OS version
+      placeholder: "macOS 27.0 (26A5425a) / Windows 11 24H2"
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware model
+      placeholder: "Mac16,11 / Surface Pro 9"
+  - type: input
+    id: cpu
+    attributes:
+      label: CPU / SoC
+      placeholder: "Apple M4 Pro"
+  - type: input
+    id: ram
+    attributes:
+      label: RAM
+      placeholder: "24 GB"
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Screenshot / terminal output
+  - type: dropdown
+    id: consistent
+    attributes:
+      label: Does it happen every time?
+      options:
+        - "Yes, every time"
+        - "No, sometimes"
+        - "Only once so far"
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I removed passwords/tokens/private data from the report.
+          required: true

@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Local logs, crash reports and test output (never publish)
+*.log
+*.ips
+crash*
+crash-backup/
+test-output/
+*.bak
+*.bak-*
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.token
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp

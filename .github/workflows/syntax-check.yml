@@ -1,0 +1,79 @@
+name: Syntax check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-syntax:
+    name: macOS single-file syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n on SysMon-One.command
+        run: bash -n SysMon-One.command
+
+      - name: Parse embedded Python (no execution)
+        run: |
+          python3 - <<'CHECK'
+          import ast, pathlib, re, sys
+          src = pathlib.Path("SysMon-One.command").read_text(encoding="utf-8")
+          m = re.search(r"<<'PYEOF'\n(.*?)\nPYEOF", src, re.S)
+          if not m:
+              sys.exit("embedded Python block not found (<<'PYEOF' ... PYEOF)")
+          code = m.group(1)
+          ast.parse(code, filename="SysMon-One.command::embedded")
+          print("embedded Python parsed OK: %d lines" % code.count(chr(10)))
+          CHECK
+
+      - name: File is tracked as executable
+        run: |
+          test -x SysMon-One.command || { echo "SysMon-One.command lost its executable bit"; exit 1; }
+          ls -l SysMon-One.command
+
+      - name: Release metadata sanity (no version drift, Windows stays Beta)
+        run: |
+          grep -q "v7.1.1" README.md || { echo "README.md missing v7.1.1"; exit 1; }
+          grep -q "7.1.1" CHANGELOG.md || { echo "CHANGELOG.md missing 7.1.1"; exit 1; }
+          grep -q "Beta" README.md || { echo "Windows Beta status missing from README.md"; exit 1; }
+          grep -q "MIT License" LICENSE || { echo "LICENSE is not MIT"; exit 1; }
+
+  windows-syntax:
+    name: Windows single-file syntax
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: File present and markers intact
+        run: |
+          if (-not (Test-Path -LiteralPath 'SysMon-One-Windows.cmd')) { throw 'SysMon-One-Windows.cmd is missing' }
+          $t = Get-Content -Raw -LiteralPath 'SysMon-One-Windows.cmd'
+          if ($t -notmatch 'chcp 65001') { throw 'chcp 65001 is missing' }
+          if ($t -notmatch '__POWERSHELL_BELOW__') { throw 'PowerShell marker is missing' }
+          if ($t -notmatch 'powershell\.exe') { throw 'no powershell.exe invocation found' }
+          Write-Host 'Wrapper markers OK'
+
+      - name: Parse embedded PowerShell (parse only, never execute)
+        run: |
+          $t = Get-Content -Raw -LiteralPath 'SysMon-One-Windows.cmd'
+          $marker = '#__POWERSHELL_BELOW__'
+          $i = $t.LastIndexOf($marker)
+          if ($i -lt 0) { throw 'PowerShell marker not found' }
+          $code = $t.Substring($i + $marker.Length)
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseInput($code, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors -and $errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Host ("{0} (line {1})" -f $_.Message, $_.Extent.StartLineNumber) }
+            throw ('PowerShell parse errors: {0}' -f $errors.Count)
+          }
+          Write-Host 'Embedded PowerShell parses cleanly (no execution performed)'

@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest an improvement for SysMon One
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: input
+    id: feature
+    attributes:
+      label: Requested feature
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Windows
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem it solves
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this belongs in SysMon One
+      description: SysMon One stays local, no telemetry, no sudo, no daemon, and never fabricates sensor values.
+    validations:
+      required: true
