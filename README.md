@@ -7,6 +7,8 @@
 
 Windows 版本约 **20KB**，macOS 版本保持在 **100KB 以内**。
 
+**Current release / 当前版本：v7.1.1**
+
 无需安装，不需要账号，不常驻后台，不上传遥测数据。
 
 SysMon One 用一个极小的本地文件直接显示 CPU、GPU、内存、Swap、磁盘、网络、功耗、风扇和进程状态，同时尝试告诉你哪些数字真正值得处理。
@@ -157,6 +159,10 @@ macOS 主程序保持在 **100KB 以内**。
 ### macOS
 
 当前主线已经在 Apple Silicon 真机进行测试。
+
+**Apple Silicon 深层监控需要 Python 3；如果系统没有 Python 3，会自动降级到 Smart Basic Mode，基础监控仍可使用。**
+
+**Deep Apple Silicon telemetry requires Python 3. If Python 3 is unavailable, SysMon One automatically falls back to Smart Basic Mode and core monitoring remains available.**
 
 主要能力包括：
 
